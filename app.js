@@ -2,8 +2,8 @@
 
 class PomodoroTimer {
     constructor() {
-        // Settings
-        this.workDuration = parseInt(localStorage.getItem('workDuration') || '25');
+    // Settings
+    this.workDuration = parseInt(localStorage.getItem('workDuration') || '45');
         this.breakDuration = parseInt(localStorage.getItem('breakDuration') || '5');
         
         // State
@@ -42,7 +42,7 @@ class PomodoroTimer {
         this.settingsBtn.addEventListener('click', () => this.toggleSettings());
         
         this.workDurationInput.addEventListener('change', (e) => {
-            this.workDuration = parseInt(e.target.value) || 25;
+            this.workDuration = parseInt(e.target.value) || 45;
             localStorage.setItem('workDuration', this.workDuration);
             if (!this.isRunning && this.isWorkSession) {
                 this.totalSeconds = this.workDuration * 60;
