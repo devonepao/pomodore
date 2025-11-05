@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="A beautiful Pomodoro timer PWA with Apple Design System principles">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Pomodoro">
+    
+    <title>Pomodoro - Focus Timer</title>
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23FF3B30' width='180' height='180' rx='40'/><circle cx='90' cy='90' r='50' fill='white' opacity='0.2'/><circle cx='90' cy='90' r='35' fill='none' stroke='white' stroke-width='3'/><line x1='90' y1='55' x2='90' y2='70' stroke='white' stroke-width='3' stroke-linecap='round'/><line x1='125' y1='90' x2='110' y2='90' stroke='white' stroke-width='3' stroke-linecap='round'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23FF3B30' width='180' height='180' rx='40'/><circle cx='90' cy='90' r='50' fill='white' opacity='0.2'/><circle cx='90' cy='90' r='35' fill='none' stroke='white' stroke-width='3'/><line x1='90' y1='55' x2='90' y2='70' stroke='white' stroke-width='3' stroke-linecap='round'/><line x1='125' y1='90' x2='110' y2='90' stroke='white' stroke-width='3' stroke-linecap='round'/></svg>">
+    <link rel="manifest" href="manifest.json">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Display', sans-serif;
+            background: linear-gradient(135deg, #f5f5f7 0%, #ffffff 100%);
+            color: #1d1d1f;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: #86868b;
+            font-weight: 500;
+        }
+
+        /* Main Timer Card */
+        .timer-card {
+            width: 100%;
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            animation: slideUp 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timer-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 59, 48, 0.05), transparent);
+            pointer-events: none;
+        }
+
+        .timer-display {
+            font-size: 72px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            font-variant-numeric: tabular-nums;
+            color: #FF3B30;
+            line-height: 1;
+            font-feature-settings: 'tnum';
+            position: relative;
+            z-index: 1;
+        }
+
+        .session-info {
+            font-size: 13px;
+            color: #86868b;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            -webkit-user-select: none;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0);
+            transition: background 0.3s ease;
+        }
+
+        .btn:active::before {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FF3B30 0%, #FF453A 100%);
+            color: white;
+            box-shadow: 0 8px 16px rgba(255, 59, 48, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(255, 59, 48, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 12px rgba(255, 59, 48, 0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #1d1d1f;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(0);
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 16px;
+            flex: none;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 24px;
+            padding: 16px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        .settings-panel.open {
+            display: flex;
+        }
+
+        .setting-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .setting-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #1d1d1f;
+        }
+
+        .setting-value {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .setting-input {
+            width: 50px;
+            padding: 6px 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: -apple-system, sans-serif;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #86868b;
+            padding-top: 8px;
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+        }
+
+        .footer strong {
+            color: #FF3B30;
+            font-weight: 600;
+        }
+
+        .countdown {
+            font-size: 10px;
+            color: #86868b;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+
+        .timer-card.pulse {
+            animation: pulse 0.4s ease-out;
+        }
+
+        .timer-card.shake {
+            animation: shake 0.5s ease-out;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .timer-display {
+                font-size: 64px;
+            }
+
+            .container {
+                max-width: 100%;
+                padding: 0 16px;
+            }
+        }
+
+        @media (max-height: 600px) {
+            .container {
+                gap: 16px;
+            }
+
+            .timer-display {
+                font-size: 56px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            html, body {
+                background: linear-gradient(135deg, #1d1d1f 0%, #000000 100%);
+                color: #f5f5f7;
+            }
+
+            .header p,
+            .session-info,
+            .countdown,
+            .footer {
+                color: #a1a1a6;
+            }
+
+            .timer-card {
+                background: rgba(45, 45, 47, 0.6);
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .btn-secondary {
+                background: rgba(58, 58, 60, 0.6);
+                border-color: rgba(255, 255, 255, 0.1);
+                color: #f5f5f7;
+            }
+
+            .btn-secondary:hover {
+                background: rgba(72, 72, 74, 0.8);
+            }
+
+            .settings-panel {
+                background: rgba(45, 45, 47, 0.6);
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .setting-label {
+                color: #f5f5f7;
+            }
+
+            .setting-input {
+                background: rgba(72, 72, 74, 0.6);
+                border-color: rgba(255, 255, 255, 0.1);
+                color: #f5f5f7;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Pomodoro</h1>
+            <p>Focus. Work. Achieve.</p>
+        </div>
+
+        <!-- Timer Card -->
+        <div class="timer-card" id="timerCard">
+            <div class="timer-display" id="timerDisplay">25:00</div>
+            <div class="session-info" id="sessionInfo">work session</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-primary" id="toggleBtn">
+                <span id="toggleIcon">▶</span>
+                <span id="toggleText">Start</span>
+            </button>
+            <button class="btn btn-secondary btn-small" id="resetBtn">Reset</button>
+            <button class="btn btn-secondary btn-small" id="settingsBtn">⚙️</button>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="settings-panel" id="settingsPanel">
+            <div class="setting-group">
+                <label class="setting-label">Work Duration</label>
+                <div class="setting-value">
+                    <input type="number" class="setting-input" id="workDuration" min="1" max="60" value="25">
+                    <span style="font-size: 13px; color: #86868b;">min</span>
+                </div>
+            </div>
+            <div class="setting-group">
+                <label class="setting-label">Break Duration</label>
+                <div class="setting-value">
+                    <input type="number" class="setting-input" id="breakDuration" min="1" max="30" value="5">
+                    <span style="font-size: 13px; color: #86868b;">min</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer with Countdown -->
+    <div class="footer">
+        <div class="countdown" id="countdownFooter">Ready to focus</div>
+        <div style="font-size: 10px; margin-top: 4px;">© 2025 <strong>Solvepao Research</strong></div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+        }
+
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    </script>
+</body>
+</html>
